@@ -3,52 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBTI 커뮤니티</title>
+    <title>MBTI 커뮤니티 - 성격 검사 및 특징 공유 플랫폼</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .container { max-width: 800px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; background-color: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); }
+        
         .header { background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); padding: 2rem 1rem; text-align: center; color: white; }
         .header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.5rem; }
         .header p { font-size: 14px; opacity: 0.9; }
-        .tab-nav { display: flex; border-bottom: 0.5px solid #e2e8f0; background: #f1f5f9; }
+        
+        .tab-nav { display: flex; border-bottom: 0.5px solid #e2e8f0; background-color: #f1f5f9; }
         .tab-btn { flex: 1; padding: 1rem; border: none; background: none; font-size: 14px; font-weight: 500; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; font-family: 'Noto Sans KR', sans-serif; }
         .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
+        
         .content { padding: 2rem 1rem; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
         h2 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; }
         .subtitle { font-size: 13px; color: #64748b; margin-bottom: 1.5rem; }
+        
         .slider-group { margin-bottom: 2rem; }
-        .slider-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .slider-label label { font-size: 13px; font-weight: 500; }
         .slider-value { font-size: 14px; font-weight: 500; color: #6366f1; }
+        
         input[type="range"] { width: 100%; height: 4px; border-radius: 2px; background: #e5e7eb; outline: none; cursor: pointer; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; }
         input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; border: none; }
-        .result-box { background: linear-gradient(135deg, #f0f4ff 0%, #f0f9ff 100%); border: 0.5px solid #c7d2fe; border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 1.5rem; }
+        
+        .result-box { background: linear-gradient(135deg, #f0f4ff 0%, #f0f9ff 100%); border: 0.5px solid #c7d2fe; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .result-box .label { font-size: 13px; color: #64748b; margin-bottom: 8px; }
         .result-mbti { font-size: 48px; font-weight: 500; color: #6366f1; font-family: 'Courier New', monospace; }
         .result-desc { font-size: 13px; color: #64748b; margin-top: 12px; }
-        .btn-primary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.3); }
-        .btn-secondary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 2rem; font-family: 'Noto Sans KR', sans-serif; }
-        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(236,72,153,0.3); }
+        
+        .top-features-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 0.5px solid #cbd5e1; }
+        .top-features-title { font-size: 12px; color: #64748b; margin-bottom: 12px; font-weight: 500; }
+        .top-features-list { display: flex; flex-direction: column; gap: 8px; }
+        
+        .feature-badge { background: white; padding: 10px; border-radius: 8px; border: 0.5px solid #e2e8f0; display: flex; align-items: center; gap: 8px; font-size: 12px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .feature-rank { font-weight: 500; color: #6366f1; min-width: 20px; }
+        .feature-text { flex: 1; color: #1e293b; }
+        .feature-votes { color: #94a3b8; font-size: 11px; }
+        
+        button { font-family: 'Noto Sans KR', sans-serif; }
+        .btn-primary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        
+        .btn-secondary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 2rem; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); }
+        
         .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem; }
-        .mbti-btn { padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
-        .mbti-btn:hover { border-color: #6366f1; background: #f0f4ff; }
-        .mbti-btn.selected { background: #6366f1; color: white; border-color: #6366f1; }
-        .selected-info { background: #f0f4ff; border-radius: 8px; padding: 12px; margin-bottom: 1.5rem; display: none; text-align: center; }
+        .mbti-btn { padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; }
+        .mbti-btn:hover { border-color: #6366f1; background-color: #f0f4ff; }
+        .mbti-btn.selected { background-color: #6366f1; color: white; border-color: #6366f1; }
+        
+        .selected-info { background-color: #f0f4ff; border-radius: 8px; padding: 12px; margin-bottom: 1.5rem; display: none; text-align: center; }
         .selected-info span { font-weight: 500; color: #6366f1; }
+        
         label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
         textarea { width: 100%; padding: 12px; border: 0.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; resize: vertical; min-height: 80px; }
-        textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
         .feature-list { display: none; }
         .feature-list.active { display: block; }
         .feature-list h3 { font-size: 14px; font-weight: 500; margin-bottom: 1rem; }
         .feature-items { display: flex; flex-direction: column; gap: 12px; }
         .feature-item { background: white; border: 0.5px solid #cbd5e1; border-radius: 12px; padding: 12px; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .feature-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .feature-info { flex: 1; }
         .feature-mbti { margin: 0 0 4px 0; font-size: 12px; font-weight: 500; color: #6366f1; }
@@ -58,6 +85,7 @@
         .stat-number { font-weight: 500; }
         .feature-delete { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; padding: 0; }
         .feature-delete:hover { color: #ef4444; }
+        
         .vote-buttons { display: flex; gap: 8px; margin-top: 10px; }
         .vote-btn { flex: 1; padding: 8px 12px; border: 0.5px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
         .vote-btn:hover { border-color: #6366f1; background: #f0f4ff; }
@@ -65,12 +93,21 @@
         .vote-btn.upvote.voted { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
         .vote-btn.downvote.voted { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); }
         .vote-btn.neutral.voted { background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%); }
+        
         .ranking-badge { display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-right: 8px; }
         .ranking-badge.top1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
         .ranking-badge.top2 { background: linear-gradient(135deg, #c084fc 0%, #a78bfa 100%); }
         .ranking-badge.top3 { background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%); }
-        .footer { background: #f1f5f9; padding: 1.5rem; text-align: center; border-top: 0.5px solid #cbd5e1; }
+        
+        .footer { background-color: #f1f5f9; padding: 1.5rem; text-align: center; border-top: 0.5px solid #cbd5e1; }
         .footer p { margin: 0; font-size: 12px; color: #64748b; }
+        
+        @media (max-width: 640px) {
+            .header h1 { font-size: 24px; }
+            .result-mbti { font-size: 40px; }
+            .mbti-grid { grid-template-columns: repeat(3, 1fr); }
+            .vote-buttons { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -127,6 +164,11 @@
                     <div class="label">당신의 성격 유형</div>
                     <div class="result-mbti" id="result-mbti">ENFP</div>
                     <p class="result-desc" id="result-desc">새로운 가능성과 사람들과의 연결을 좋아합니다</p>
+
+                    <div class="top-features-section">
+                        <p class="top-features-title">📊 커뮤니티에서 선정한 특징:</p>
+                        <div id="top-features-list" class="top-features-list"></div>
+                    </div>
                 </div>
 
                 <button class="btn-primary" onclick="saveResult()">검사 결과 저장</button>
@@ -153,6 +195,7 @@
                     <button class="mbti-btn" onclick="selectMBTI('ESTP')">ESTP</button>
                     <button class="mbti-btn" onclick="selectMBTI('ISFJ')">ISFJ</button>
                     <button class="mbti-btn" onclick="selectMBTI('ESTJ')">ESTJ</button>
+                    <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
                 </div>
 
                 <div id="selected-info" class="selected-info">
@@ -239,6 +282,42 @@
             currentMBTI = (ei < 0 ? 'I' : 'E') + (sn < 0 ? 'N' : 'S') + (tf < 0 ? 'F' : 'T') + (jp < 0 ? 'P' : 'J');
             document.getElementById('result-mbti').textContent = currentMBTI;
             document.getElementById('result-desc').textContent = MBTI_DESCRIPTIONS[currentMBTI] || '당신의 성격 유형입니다';
+            displayTopFeatures(currentMBTI);
+        }
+
+        function displayTopFeatures(mbti) {
+            const topFeaturesList = document.getElementById('top-features-list');
+            topFeaturesList.innerHTML = '';
+
+            if (!features[mbti] || features[mbti].length === 0) {
+                topFeaturesList.innerHTML = '<p style="font-size: 12px; color: #94a3b8;">아직 등록된 특징이 없습니다</p>';
+                return;
+            }
+
+            const sorted = [...features[mbti]].sort((a, b) => {
+                const votesA = a.upvote + a.downvote + a.neutral;
+                const votesB = b.upvote + b.downvote + b.neutral;
+                return votesB - votesA;
+            });
+
+            sorted.slice(0, 5).forEach((feature, index) => {
+                const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+                const div = document.createElement('div');
+                div.className = 'feature-badge';
+
+                let rankEmoji = '';
+                if (index === 0) rankEmoji = '🥇';
+                else if (index === 1) rankEmoji = '🥈';
+                else if (index === 2) rankEmoji = '🥉';
+                else rankEmoji = `${index + 1}.`;
+
+                div.innerHTML = `
+                    <span class="feature-rank">${rankEmoji}</span>
+                    <span class="feature-text">${feature.text}</span>
+                    <span class="feature-votes">${totalVotes}표</span>
+                `;
+                topFeaturesList.appendChild(div);
+            });
         }
 
         function saveResult() {
@@ -276,6 +355,7 @@
             localStorage.setItem('mbti-features', JSON.stringify(features));
             renderFeatures();
             renderVoting();
+            displayTopFeatures(currentMBTI);
             alert(`✓ ${selectedMBTI} 특징이 추가되었습니다!`);
         }
 
@@ -336,6 +416,7 @@
             allFeatures.forEach((item, rank) => {
                 const { mbti, feature, index } = item;
                 const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+
                 let rankingBadge = '';
                 if (rank === 0) rankingBadge = '<span class="ranking-badge top1">🥇 1위</span>';
                 else if (rank === 1) rankingBadge = '<span class="ranking-badge top2">🥈 2위</span>';
@@ -368,6 +449,7 @@
 
         function vote(mbti, index, voteType) {
             const feature = features[mbti][index];
+
             if (feature.userVote === 'upvote') feature.upvote--;
             else if (feature.userVote === 'downvote') feature.downvote--;
             else if (feature.userVote === 'neutral') feature.neutral--;
@@ -384,6 +466,7 @@
             localStorage.setItem('mbti-features', JSON.stringify(features));
             renderVoting();
             renderFeatures();
+            displayTopFeatures(currentMBTI);
         }
 
         function deleteFeature(mbti, index) {
@@ -393,6 +476,7 @@
                 localStorage.setItem('mbti-features', JSON.stringify(features));
                 renderFeatures();
                 renderVoting();
+                displayTopFeatures(currentMBTI);
             }
         }
     </script>
