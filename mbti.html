@@ -7,20 +7,46 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
         .container { max-width: 800px; margin: 0 auto; background-color: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); }
         
-        .header { background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); padding: 2rem 1rem; text-align: center; color: white; }
-        .header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.5rem; }
+        /* Login Screen */
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; }
+        .login-screen.hidden { display: none; }
+        
+        .login-logo { font-size: 48px; margin-bottom: 1rem; }
+        .login-title { font-size: 32px; font-weight: 700; margin-bottom: 0.5rem; color: #1e293b; }
+        .login-subtitle { font-size: 16px; color: #64748b; margin-bottom: 3rem; }
+        
+        .login-button { padding: 14px 32px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s ease; }
+        .google-login { background: white; border: 1px solid #cbd5e1; color: #1e293b; }
+        .google-login:hover { background: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .google-logo { width: 20px; height: 20px; }
+        
+        .loading { opacity: 0.6; cursor: not-allowed; }
+        
+        /* Main App */
+        .app-screen { display: flex; flex-direction: column; min-height: 100vh; }
+        .app-screen.hidden { display: none; }
+        
+        .header { background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); padding: 2rem 1rem; text-align: center; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { flex: 1; }
+        .header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.25rem; }
         .header p { font-size: 14px; opacity: 0.9; }
+        
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-name { font-size: 13px; color: white; opacity: 0.9; }
+        .logout-btn { padding: 6px 14px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 4px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+        .logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
         
         .tab-nav { display: flex; border-bottom: 0.5px solid #e2e8f0; background-color: #f1f5f9; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 1rem; border: none; background: none; font-size: 14px; font-weight: 500; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
         .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
         
-        .content { padding: 2rem 1rem; }
+        .content { flex: 1; padding: 2rem 1rem; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
@@ -44,9 +70,7 @@
         .top-features-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 0.5px solid #cbd5e1; }
         .top-features-title { font-size: 12px; color: #64748b; margin-bottom: 12px; font-weight: 500; }
         .top-features-list { display: flex; flex-direction: column; gap: 8px; }
-        
-        .feature-badge { background: white; padding: 10px; border-radius: 8px; border: 0.5px solid #e2e8f0; display: flex; align-items: center; gap: 8px; font-size: 12px; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .feature-badge { background: white; padding: 10px; border-radius: 8px; border: 0.5px solid #e2e8f0; display: flex; align-items: center; gap: 8px; font-size: 12px; }
         .feature-rank { font-weight: 500; color: #6366f1; min-width: 20px; }
         .feature-text { flex: 1; color: #1e293b; }
         .feature-votes { color: #94a3b8; font-size: 11px; }
@@ -59,7 +83,7 @@
         .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); }
         
         .category-filter { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .category-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s ease; }
+        .category-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
         .category-btn:hover { border-color: #6366f1; background: #f0f4ff; }
         .category-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
         
@@ -79,7 +103,7 @@
         .feature-list.active { display: block; }
         .feature-list h3 { font-size: 14px; font-weight: 500; margin-bottom: 1rem; }
         .feature-items { display: flex; flex-direction: column; gap: 12px; }
-        .feature-item { background: white; border: 0.5px solid #cbd5e1; border-radius: 12px; padding: 12px; animation: slideIn 0.3s ease; }
+        .feature-item { background: white; border: 0.5px solid #cbd5e1; border-radius: 12px; padding: 12px; }
         
         .feature-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .feature-info { flex: 1; }
@@ -106,227 +130,261 @@
         .ranking-badge.top3 { background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%); }
         
         .mbti-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
-        .filter-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s ease; }
+        .filter-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
         .filter-btn:hover { border-color: #6366f1; background: #f0f4ff; }
         .filter-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
-        
-        .selected-display { background: #f0f4ff; border-radius: 8px; padding: 12px; margin-bottom: 1rem; font-size: 13px; }
-        .selected-display .label { margin: 0 0 4px 0; font-size: 12px; color: #64748b; }
-        .selected-display .value { font-weight: 500; color: #6366f1; font-size: 16px; }
         
         .footer { background-color: #f1f5f9; padding: 1.5rem; text-align: center; border-top: 0.5px solid #cbd5e1; }
         .footer p { margin: 0; font-size: 12px; color: #64748b; }
         
         @media (max-width: 640px) {
+            .header { flex-direction: column; gap: 1rem; }
             .header h1 { font-size: 24px; }
             .result-mbti { font-size: 40px; }
             .mbti-grid { grid-template-columns: repeat(3, 1fr); }
             .vote-buttons { flex-direction: column; }
-            .category-filter { gap: 6px; }
-            .category-btn { padding: 6px 12px; font-size: 11px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>MBTI 커뮤니티</h1>
-            <p>성격 검사와 특징 공유 플랫폼</p>
-        </div>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-logo">🧠</div>
+        <h1 class="login-title">MBTI 커뮤니티</h1>
+        <p class="login-subtitle">성격 검사와 특징 공유 플랫폼</p>
+        <button class="login-button google-login" id="googleLoginBtn" onclick="signInWithGoogle()">
+            <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                <path fill="#FBBC04" d="M12 2v8h5.5c.46 0 .92.05 1.38.15V8c0-3.31-2.69-6-6-6z"/>
+                <path fill="#34A853" d="M2 12c0 2.62 1.37 4.91 3.44 6.19l3.2-2.49c-.79-.58-1.3-1.5-1.3-2.7 0-1.76 1.49-3.2 3.34-3.2h.01l2.1-3.1C6.34 6.09 2 8.7 2 12z"/>
+                <path fill="#4285F4" d="M12 19.88c2.4 0 4.58-.88 6.26-2.31l-3.2-2.49c-.89.59-1.96.94-3.06.94-2.35 0-4.35-1.64-5.05-3.84l-3.2 2.49C7.64 18.51 9.58 19.88 12 19.88z"/>
+            </svg>
+            Google로 로그인
+        </button>
+    </div>
 
-        <div class="tab-nav">
-            <button class="tab-btn active" data-tab="test" onclick="switchTab('test')">MBTI 검사</button>
-            <button class="tab-btn" data-tab="feature" onclick="switchTab('feature')">특징 추가</button>
-            <button class="tab-btn" data-tab="voting" onclick="switchTab('voting')">투표하기</button>
-            <button class="tab-btn" data-tab="ranking" onclick="switchTab('ranking')">채택된 특징</button>
-        </div>
-
-        <div class="content">
-            <!-- MBTI Test Tab -->
-            <div id="test" class="tab-content active">
-                <h2>당신의 성격을 찾아보세요</h2>
-                <p class="subtitle">각 축에서 당신에게 맞는 쪽으로 슬라이더를 움직여보세요</p>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <label>외향적 ← → 내향적</label>
-                        <span class="slider-value" id="ei-value">E</span>
-                    </div>
-                    <input type="range" id="ei-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+    <!-- Main App -->
+    <div class="app-screen hidden" id="appScreen">
+        <div class="container">
+            <div class="header">
+                <div class="header-title">
+                    <h1>MBTI 커뮤니티</h1>
+                    <p>성격 검사와 특징 공유 플랫폼</p>
                 </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <label>감각적 ← → 직관적</label>
-                        <span class="slider-value" id="sn-value">S</span>
-                    </div>
-                    <input type="range" id="sn-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <label>사고적 ← → 감정적</label>
-                        <span class="slider-value" id="tf-value">T</span>
-                    </div>
-                    <input type="range" id="tf-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
-                </div>
-
-                <div class="slider-group">
-                    <div class="slider-label">
-                        <label>판단적 ← → 인식적</label>
-                        <span class="slider-value" id="jp-value">J</span>
-                    </div>
-                    <input type="range" id="jp-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
-                </div>
-
-                <div class="result-box">
-                    <div class="label">당신의 성격 유형</div>
-                    <div class="result-mbti" id="result-mbti">ENFP</div>
-                    <p class="result-desc" id="result-desc">새로운 가능성과 사람들과의 연결을 좋아합니다</p>
-
-                    <div class="top-features-section">
-                        <p class="top-features-title">📊 커뮤니티에서 선정한 특징:</p>
-                        <div id="top-features-list" class="top-features-list"></div>
-                    </div>
-                </div>
-
-                <button class="btn-primary" onclick="saveResult()">검사 결과 저장</button>
-            </div>
-
-            <!-- Feature Add Tab -->
-            <div id="feature" class="tab-content">
-                <h2>MBTI 특징 추가하기</h2>
-                <p class="subtitle">카테고리를 선택하고 MBTI 특징을 추가해보세요</p>
-
-                <label>관계 카테고리 선택</label>
-                <div class="category-filter">
-                    <button class="category-btn active" onclick="selectCategory('lover')">💕 연인</button>
-                    <button class="category-btn" onclick="selectCategory('friend')">👥 친구</button>
-                    <button class="category-btn" onclick="selectCategory('work')">💼 업무</button>
-                </div>
-
-                <label>MBTI 유형 선택</label>
-                <div class="mbti-grid">
-                    <button class="mbti-btn" onclick="selectMBTI('ENFP')">ENFP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('INTJ')">INTJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('INFJ')">INFJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ISFP')">ISFP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ENFJ')">ENFJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('INFP')">INFP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ISTJ')">ISTJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ESFP')">ESFP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ENTJ')">ENTJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ESFJ')">ESFJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ISTP')">ISTP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ESTP')">ESTP</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ISFJ')">ISFJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('ESTJ')">ESTJ</button>
-                    <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
-                </div>
-
-                <div id="selected-info" class="selected-info">
-                    <p><span id="selected-category-text">💕 연인</span> - <span id="selected-mbti-text">선택 안함</span></p>
-                </div>
-
-                <label for="feature-input">특징 설명</label>
-                <textarea id="feature-input" placeholder="예: 매우 감정이 풍부하고 감정 표현을 잘해요"></textarea>
-
-                <button class="btn-secondary" onclick="addFeature()">특징 추가하기</button>
-
-                <div id="feature-list" class="feature-list">
-                    <h3>✨ 추가된 특징</h3>
-                    <div id="feature-items" class="feature-items"></div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameDisplay"></div>
+                    <button class="logout-btn" onclick="logout()">로그아웃</button>
                 </div>
             </div>
 
-            <!-- Voting Tab -->
-            <div id="voting" class="tab-content">
-                <h2>특징에 투표하기</h2>
-                <p class="subtitle">카테고리와 MBTI를 선택해서 특징에 투표하세요!</p>
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="test" onclick="switchTab('test')">MBTI 검사</button>
+                <button class="tab-btn" data-tab="feature" onclick="switchTab('feature')">특징 추가</button>
+                <button class="tab-btn" data-tab="voting" onclick="switchTab('voting')">투표하기</button>
+                <button class="tab-btn" data-tab="ranking" onclick="switchTab('ranking')">채택된 특징</button>
+            </div>
 
-                <label>관계 카테고리 선택</label>
-                <div class="category-filter">
-                    <button class="category-btn active" onclick="filterVotingCategory('lover')">💕 연인</button>
-                    <button class="category-btn" onclick="filterVotingCategory('friend')">👥 친구</button>
-                    <button class="category-btn" onclick="filterVotingCategory('work')">💼 업무</button>
+            <div class="content">
+                <!-- MBTI Test Tab -->
+                <div id="test" class="tab-content active">
+                    <h2>당신의 성격을 찾아보세요</h2>
+                    <p class="subtitle">각 축에서 당신에게 맞는 쪽으로 슬라이더를 움직여보세요</p>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>외향적 ← → 내향적</label>
+                            <span class="slider-value" id="ei-value">E</span>
+                        </div>
+                        <input type="range" id="ei-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>감각적 ← → 직관적</label>
+                            <span class="slider-value" id="sn-value">S</span>
+                        </div>
+                        <input type="range" id="sn-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>사고적 ← → 감정적</label>
+                            <span class="slider-value" id="tf-value">T</span>
+                        </div>
+                        <input type="range" id="tf-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>판단적 ← → 인식적</label>
+                            <span class="slider-value" id="jp-value">J</span>
+                        </div>
+                        <input type="range" id="jp-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="result-box">
+                        <div class="label">당신의 성격 유형</div>
+                        <div class="result-mbti" id="result-mbti">ENFP</div>
+                        <p class="result-desc" id="result-desc">새로운 가능성과 사람들과의 연결을 좋아합니다</p>
+
+                        <div class="top-features-section">
+                            <p class="top-features-title">📊 커뮤니티에서 선정한 특징:</p>
+                            <div id="top-features-list" class="top-features-list"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveResult()">검사 결과 저장</button>
                 </div>
 
-                <label>MBTI 필터</label>
-                <div class="mbti-filter">
-                    <button class="filter-btn active" onclick="filterVotingMBTI('all')">모두보기</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ENFP')">ENFP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('INTJ')">INTJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('INFJ')">INFJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ISFP')">ISFP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ENFJ')">ENFJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('INTP')">INTP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('INFP')">INFP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ISTJ')">ISTJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ESFP')">ESFP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ENTJ')">ENTJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ESFJ')">ESFJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ISTP')">ISTP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ESTP')">ESTP</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ISFJ')">ISFJ</button>
-                    <button class="filter-btn" onclick="filterVotingMBTI('ESTJ')">ESTJ</button>
+                <!-- Feature Add Tab -->
+                <div id="feature" class="tab-content">
+                    <h2>MBTI 특징 추가하기</h2>
+                    <p class="subtitle">카테고리를 선택하고 MBTI 특징을 추가해보세요</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="selectCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="selectCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="selectCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 유형 선택</label>
+                    <div class="mbti-grid">
+                        <button class="mbti-btn" onclick="selectMBTI('ENFP')">ENFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTJ')">INTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INFJ')">INFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISFP')">ISFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ENFJ')">ENFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INFP')">INFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISTJ')">ISTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESFP')">ESFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ENTJ')">ENTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESFJ')">ESFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISTP')">ISTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESTP')">ESTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISFJ')">ISFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESTJ')">ESTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
+                    </div>
+
+                    <div id="selected-info" class="selected-info">
+                        <p><span id="selected-category-text">💕 연인</span> - <span id="selected-mbti-text">선택 안함</span></p>
+                    </div>
+
+                    <label for="feature-input">특징 설명</label>
+                    <textarea id="feature-input" placeholder="예: 매우 감정이 풍부하고 감정 표현을 잘해요"></textarea>
+
+                    <button class="btn-secondary" onclick="addFeature()">특징 추가하기</button>
+
+                    <div id="feature-list" class="feature-list">
+                        <h3>✨ 추가된 특징</h3>
+                        <div id="feature-items" class="feature-items"></div>
+                    </div>
                 </div>
 
-                <div id="voting-list" class="feature-list active">
-                    <div id="voting-items" class="feature-items"></div>
-                    <div id="empty-voting" style="text-align: center; padding: 2rem; color: #94a3b8;">
-                        <p style="font-size: 14px;">아직 추가된 특징이 없습니다</p>
+                <!-- Voting Tab -->
+                <div id="voting" class="tab-content">
+                    <h2>특징에 투표하기</h2>
+                    <p class="subtitle">카테고리와 MBTI를 선택해서 특징에 투표하세요!</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="filterVotingCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="filterVotingCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="filterVotingCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 필터</label>
+                    <div class="mbti-filter">
+                        <button class="filter-btn active" onclick="filterVotingMBTI('all')">모두보기</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENFP')">ENFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INTJ')">INTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INFJ')">INFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISFP')">ISFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENFJ')">ENFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INTP')">INTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INFP')">INFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISTJ')">ISTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESFP')">ESFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENTJ')">ENTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESFJ')">ESFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISTP')">ISTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESTP')">ESTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISFJ')">ISFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESTJ')">ESTJ</button>
+                    </div>
+
+                    <div id="voting-list" class="feature-list active">
+                        <div id="voting-items" class="feature-items"></div>
+                        <div id="empty-voting" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            <p style="font-size: 14px;">아직 추가된 특징이 없습니다</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ranking Tab -->
+                <div id="ranking" class="tab-content">
+                    <h2>📊 채택된 특징 랭킹</h2>
+                    <p class="subtitle">커뮤니티의 투표로 선정된 특징들을 순위별로 확인하세요</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="filterRankingCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="filterRankingCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="filterRankingCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 필터</label>
+                    <div class="mbti-filter">
+                        <button class="filter-btn active" onclick="filterRankingMBTI('all')">모두보기</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENFP')">ENFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INTJ')">INTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INFJ')">INFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISFP')">ISFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENFJ')">ENFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INTP')">INTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INFP')">INFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISTJ')">ISTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESFP')">ESFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENTJ')">ENTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESFJ')">ESFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISTP')">ISTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESTP')">ESTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISFJ')">ISFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESTJ')">ESTJ</button>
+                    </div>
+
+                    <div id="ranking-list" class="feature-list active">
+                        <div id="ranking-items" class="feature-items"></div>
+                        <div id="empty-ranking" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            <p style="font-size: 14px;">아직 투표된 특징이 없습니다</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Ranking Tab (채택된 특징) -->
-            <div id="ranking" class="tab-content">
-                <h2>📊 채택된 특징 랭킹</h2>
-                <p class="subtitle">커뮤니티의 투표로 선정된 특징들을 순위별로 확인하세요</p>
-
-                <label>관계 카테고리 선택</label>
-                <div class="category-filter">
-                    <button class="category-btn active" onclick="filterRankingCategory('lover')">💕 연인</button>
-                    <button class="category-btn" onclick="filterRankingCategory('friend')">👥 친구</button>
-                    <button class="category-btn" onclick="filterRankingCategory('work')">💼 업무</button>
-                </div>
-
-                <label>MBTI 필터</label>
-                <div class="mbti-filter">
-                    <button class="filter-btn active" onclick="filterRankingMBTI('all')">모두보기</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ENFP')">ENFP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('INTJ')">INTJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('INFJ')">INFJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ISFP')">ISFP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ENFJ')">ENFJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('INTP')">INTP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('INFP')">INFP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ISTJ')">ISTJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ESFP')">ESFP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ENTJ')">ENTJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ESFJ')">ESFJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ISTP')">ISTP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ESTP')">ESTP</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ISFJ')">ISFJ</button>
-                    <button class="filter-btn" onclick="filterRankingMBTI('ESTJ')">ESTJ</button>
-                </div>
-
-                <div id="ranking-list" class="feature-list active">
-                    <div id="ranking-items" class="feature-items"></div>
-                    <div id="empty-ranking" style="text-align: center; padding: 2rem; color: #94a3b8;">
-                        <p style="font-size: 14px;">아직 투표된 특징이 없습니다</p>
-                    </div>
-                </div>
+            <div class="footer">
+                <p>© 2024 MBTI 커뮤니티</p>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>© 2024 MBTI 커뮤니티</p>
         </div>
     </div>
 
     <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://fkechinmnetnjbfancm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrZWNoaW5ubW5ldG5qYmZhbmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTM4NDksImV4cCI6MjA5ODEyOTg0OX0.f21Ho-PHFvL-lKqdfQGiM110cggmk79rJ3X2oe9Oqbo';
+
+        let supabaseClient;
+        
+        // Supabase 클라이언트 초기화
+        function initSupabase() {
+            if (!supabaseClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+            return supabaseClient;
+        }
+
         const MBTI_DESCRIPTIONS = {
             ENFP: '새로운 가능성과 사람들과의 연결을 좋아합니다',
             INTJ: '전략적이고 독립적인 사고를 즐깁니다',
@@ -359,31 +417,67 @@
         let votingMBTI = 'all';
         let rankingCategory = 'lover';
         let rankingMBTI = 'all';
+        let currentUser = null;
 
-        // 데이터 구조 확인
-        function ensureDataStructure() {
-            Object.keys(features).forEach(mbti => {
-                if (typeof features[mbti] === 'object' && !Array.isArray(features[mbti])) {
-                    return; // 이미 올바른 구조
-                }
-                // 이전 구조인 경우 마이그레이션
-                const oldData = features[mbti];
-                features[mbti] = {
-                    lover: Array.isArray(oldData) ? oldData : [],
-                    friend: [],
-                    work: []
-                };
-            });
+        // Google 로그인
+        async function signInWithGoogle() {
+            const btn = document.getElementById('googleLoginBtn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            try {
+                const client = initSupabase();
+                const { data, error } = await client.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.href
+                    }
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                alert('로그인에 실패했습니다. 다시 시도해주세요.');
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
         }
 
-        window.addEventListener('load', () => {
-            ensureDataStructure();
-            updateMBTI();
-            renderFeatures();
-            renderVoting();
-            renderRanking();
-        });
+        // 로그아웃
+        async function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                const client = initSupabase();
+                const { error } = await client.auth.signOut();
+                if (!error) {
+                    location.reload();
+                }
+            }
+        }
 
+        // 사용자 확인
+        async function checkAuth() {
+            const client = initSupabase();
+            const { data: { session } } = await client.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                
+                const userName = session.user.user_metadata?.full_name || session.user.email;
+                document.getElementById('userNameDisplay').textContent = userName;
+                
+                updateMBTI();
+                renderFeatures();
+                renderVoting();
+                renderRanking();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('appScreen').classList.add('hidden');
+            }
+        }
+
+        // 탭 전환
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -393,6 +487,7 @@
             if (tabName === 'ranking') renderRanking();
         }
 
+        // MBTI 업데이트
         function updateMBTI() {
             const ei = parseInt(document.getElementById('ei-slider').value);
             const sn = parseInt(document.getElementById('sn-slider').value);
@@ -410,6 +505,7 @@
             displayTopFeatures(currentMBTI);
         }
 
+        // 상위 특징 표시
         function displayTopFeatures(mbti) {
             const topFeaturesList = document.getElementById('top-features-list');
             topFeaturesList.innerHTML = '';
@@ -442,6 +538,20 @@
                     <span class="feature-votes">${feature.totalVotes}표</span>
                 `;
                 topFeaturesList.appendChild(div);
+            });
+        }
+
+        function ensureDataStructure() {
+            Object.keys(features).forEach(mbti => {
+                if (typeof features[mbti] === 'object' && !Array.isArray(features[mbti])) {
+                    return;
+                }
+                const oldData = features[mbti];
+                features[mbti] = {
+                    lover: Array.isArray(oldData) ? oldData : [],
+                    friend: [],
+                    work: []
+                };
             });
         }
 
@@ -735,6 +845,22 @@
                 displayTopFeatures(currentMBTI);
             }
         }
+
+        // 초기화
+        window.addEventListener('load', () => {
+            ensureDataStructure();
+            checkAuth();
+
+            // 로그인 상태 변화 감지
+            const client = initSupabase();
+            client.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    checkAuth();
+                } else if (event === 'SIGNED_OUT') {
+                    checkAuth();
+                }
+            });
+        });
     </script>
 </body>
 </html>
