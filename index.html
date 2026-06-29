@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI 커뮤니티 - 성격 검사 및 특징 공유 플랫폼</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; background-color: white; min-height: 100vh; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); }
+        
+        /* Login Screen */
+        .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; }
+        .login-screen.hidden { display: none; }
+        
+        .login-logo { font-size: 48px; margin-bottom: 1rem; }
+        .login-title { font-size: 32px; font-weight: 700; margin-bottom: 0.5rem; color: #1e293b; }
+        .login-subtitle { font-size: 16px; color: #64748b; margin-bottom: 3rem; }
+        
+        .login-button { padding: 14px 32px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s ease; }
+        .google-login { background: white; border: 1px solid #cbd5e1; color: #1e293b; }
+        .google-login:hover { background: #f1f5f9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .google-logo { width: 20px; height: 20px; }
+        
+        .loading { opacity: 0.6; cursor: not-allowed; }
+        
+        /* Main App */
+        .app-screen { display: flex; flex-direction: column; min-height: 100vh; }
+        .app-screen.hidden { display: none; }
+        
+        .header { background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); padding: 2rem 1rem; text-align: center; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .header-title { flex: 1; }
+        .header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.25rem; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-name { font-size: 13px; color: white; opacity: 0.9; }
+        .logout-btn { padding: 6px 14px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: white; border-radius: 4px; font-size: 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; }
+        .logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
+        
+        .tab-nav { display: flex; border-bottom: 0.5px solid #e2e8f0; background-color: #f1f5f9; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 1rem; border: none; background: none; font-size: 14px; font-weight: 500; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
+        .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
+        
+        .content { flex: 1; padding: 2rem 1rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        h2 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; }
+        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 1.5rem; }
+        
+        .slider-group { margin-bottom: 2rem; }
+        .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .slider-label label { font-size: 13px; font-weight: 500; }
+        .slider-value { font-size: 14px; font-weight: 500; color: #6366f1; }
+        
+        input[type="range"] { width: 100%; height: 4px; border-radius: 2px; background: #e5e7eb; outline: none; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; }
+        input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #6366f1; cursor: pointer; border: none; }
+        
+        .result-box { background: linear-gradient(135deg, #f0f4ff 0%, #f0f9ff 100%); border: 0.5px solid #c7d2fe; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .result-box .label { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+        .result-mbti { font-size: 48px; font-weight: 500; color: #6366f1; font-family: 'Courier New', monospace; }
+        .result-desc { font-size: 13px; color: #64748b; margin-top: 12px; }
+        
+        .top-features-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 0.5px solid #cbd5e1; }
+        .top-features-title { font-size: 12px; color: #64748b; margin-bottom: 12px; font-weight: 500; }
+        .top-features-list { display: flex; flex-direction: column; gap: 8px; }
+        .feature-badge { background: white; padding: 10px; border-radius: 8px; border: 0.5px solid #e2e8f0; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .feature-rank { font-weight: 500; color: #6366f1; min-width: 20px; }
+        .feature-text { flex: 1; color: #1e293b; }
+        .feature-votes { color: #94a3b8; font-size: 11px; }
+        
+        button { font-family: 'Noto Sans KR', sans-serif; }
+        .btn-primary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+        
+        .btn-secondary { width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 2rem; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); }
+        
+        .category-filter { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .category-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
+        .category-btn:hover { border-color: #6366f1; background: #f0f4ff; }
+        .category-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
+        
+        .mbti-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+        .mbti-btn { padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; }
+        .mbti-btn:hover { border-color: #6366f1; background-color: #f0f4ff; }
+        .mbti-btn.selected { background-color: #6366f1; color: white; border-color: #6366f1; }
+        
+        .selected-info { background-color: #f0f4ff; border-radius: 8px; padding: 12px; margin-bottom: 1.5rem; display: none; text-align: center; }
+        .selected-info span { font-weight: 500; color: #6366f1; }
+        
+        label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+        textarea { width: 100%; padding: 12px; border: 0.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; resize: vertical; min-height: 80px; }
+        textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
+        .feature-list { display: none; }
+        .feature-list.active { display: block; }
+        .feature-list h3 { font-size: 14px; font-weight: 500; margin-bottom: 1rem; }
+        .feature-items { display: flex; flex-direction: column; gap: 12px; }
+        .feature-item { background: white; border: 0.5px solid #cbd5e1; border-radius: 12px; padding: 12px; }
+        
+        .feature-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .feature-info { flex: 1; }
+        .feature-meta { margin: 0 0 4px 0; font-size: 11px; color: #94a3b8; }
+        .feature-mbti { margin: 0 0 4px 0; font-size: 12px; font-weight: 500; color: #6366f1; }
+        .feature-text { margin: 0; font-size: 13px; }
+        .feature-stats { display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #e2e8f0; }
+        .stat { font-size: 12px; color: #64748b; }
+        .stat-number { font-weight: 500; }
+        .feature-delete { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; padding: 0; }
+        .feature-delete:hover { color: #ef4444; }
+        
+        .vote-buttons { display: flex; gap: 8px; margin-top: 10px; }
+        .vote-btn { flex: 1; padding: 8px 12px; border: 0.5px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
+        .vote-btn:hover { border-color: #6366f1; background: #f0f4ff; }
+        .vote-btn.voted { color: white; border: none; }
+        .vote-btn.upvote.voted { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
+        .vote-btn.downvote.voted { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); }
+        .vote-btn.neutral.voted { background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%); }
+        
+        .ranking-badge { display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-right: 8px; }
+        .ranking-badge.top1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+        .ranking-badge.top2 { background: linear-gradient(135deg, #c084fc 0%, #a78bfa 100%); }
+        .ranking-badge.top3 { background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%); }
+        
+        .mbti-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .filter-btn { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #64748b; font-family: 'Noto Sans KR', sans-serif; }
+        .filter-btn:hover { border-color: #6366f1; background: #f0f4ff; }
+        .filter-btn.active { background: #6366f1; color: white; border-color: #6366f1; }
+        
+        .footer { background-color: #f1f5f9; padding: 1.5rem; text-align: center; border-top: 0.5px solid #cbd5e1; }
+        .footer p { margin: 0; font-size: 12px; color: #64748b; }
+        
+        @media (max-width: 640px) {
+            .header { flex-direction: column; gap: 1rem; }
+            .header h1 { font-size: 24px; }
+            .result-mbti { font-size: 40px; }
+            .mbti-grid { grid-template-columns: repeat(3, 1fr); }
+            .vote-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-logo">🧠</div>
+        <h1 class="login-title">MBTI 커뮤니티</h1>
+        <p class="login-subtitle">성격 검사와 특징 공유 플랫폼</p>
+        <button class="login-button google-login" id="googleLoginBtn" onclick="signInWithGoogle()">
+            <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                <path fill="#FBBC04" d="M12 2v8h5.5c.46 0 .92.05 1.38.15V8c0-3.31-2.69-6-6-6z"/>
+                <path fill="#34A853" d="M2 12c0 2.62 1.37 4.91 3.44 6.19l3.2-2.49c-.79-.58-1.3-1.5-1.3-2.7 0-1.76 1.49-3.2 3.34-3.2h.01l2.1-3.1C6.34 6.09 2 8.7 2 12z"/>
+                <path fill="#4285F4" d="M12 19.88c2.4 0 4.58-.88 6.26-2.31l-3.2-2.49c-.89.59-1.96.94-3.06.94-2.35 0-4.35-1.64-5.05-3.84l-3.2 2.49C7.64 18.51 9.58 19.88 12 19.88z"/>
+            </svg>
+            Google로 로그인
+        </button>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-screen hidden" id="appScreen">
+        <div class="container">
+            <div class="header">
+                <div class="header-title">
+                    <h1>MBTI 커뮤니티</h1>
+                    <p>성격 검사와 특징 공유 플랫폼</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameDisplay"></div>
+                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                </div>
+            </div>
+
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="test" onclick="switchTab('test')">MBTI 검사</button>
+                <button class="tab-btn" data-tab="feature" onclick="switchTab('feature')">특징 추가</button>
+                <button class="tab-btn" data-tab="voting" onclick="switchTab('voting')">투표하기</button>
+                <button class="tab-btn" data-tab="ranking" onclick="switchTab('ranking')">채택된 특징</button>
+            </div>
+
+            <div class="content">
+                <!-- MBTI Test Tab -->
+                <div id="test" class="tab-content active">
+                    <h2>당신의 성격을 찾아보세요</h2>
+                    <p class="subtitle">각 축에서 당신에게 맞는 쪽으로 슬라이더를 움직여보세요</p>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>외향적 ← → 내향적</label>
+                            <span class="slider-value" id="ei-value">E</span>
+                        </div>
+                        <input type="range" id="ei-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>감각적 ← → 직관적</label>
+                            <span class="slider-value" id="sn-value">S</span>
+                        </div>
+                        <input type="range" id="sn-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>사고적 ← → 감정적</label>
+                            <span class="slider-value" id="tf-value">T</span>
+                        </div>
+                        <input type="range" id="tf-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label>판단적 ← → 인식적</label>
+                            <span class="slider-value" id="jp-value">J</span>
+                        </div>
+                        <input type="range" id="jp-slider" min="-50" max="50" value="0" oninput="updateMBTI()">
+                    </div>
+
+                    <div class="result-box">
+                        <div class="label">당신의 성격 유형</div>
+                        <div class="result-mbti" id="result-mbti">ENFP</div>
+                        <p class="result-desc" id="result-desc">새로운 가능성과 사람들과의 연결을 좋아합니다</p>
+
+                        <div class="top-features-section">
+                            <p class="top-features-title">📊 커뮤니티에서 선정한 특징:</p>
+                            <div id="top-features-list" class="top-features-list"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveResult()">검사 결과 저장</button>
+                </div>
+
+                <!-- Feature Add Tab -->
+                <div id="feature" class="tab-content">
+                    <h2>MBTI 특징 추가하기</h2>
+                    <p class="subtitle">카테고리를 선택하고 MBTI 특징을 추가해보세요</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="selectCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="selectCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="selectCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 유형 선택</label>
+                    <div class="mbti-grid">
+                        <button class="mbti-btn" onclick="selectMBTI('ENFP')">ENFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTJ')">INTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INFJ')">INFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISFP')">ISFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ENFJ')">ENFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INFP')">INFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISTJ')">ISTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESFP')">ESFP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ENTJ')">ENTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESFJ')">ESFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISTP')">ISTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESTP')">ESTP</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ISFJ')">ISFJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('ESTJ')">ESTJ</button>
+                        <button class="mbti-btn" onclick="selectMBTI('INTP')">INTP</button>
+                    </div>
+
+                    <div id="selected-info" class="selected-info">
+                        <p><span id="selected-category-text">💕 연인</span> - <span id="selected-mbti-text">선택 안함</span></p>
+                    </div>
+
+                    <label for="feature-input">특징 설명</label>
+                    <textarea id="feature-input" placeholder="예: 매우 감정이 풍부하고 감정 표현을 잘해요"></textarea>
+
+                    <button class="btn-secondary" onclick="addFeature()">특징 추가하기</button>
+
+                    <div id="feature-list" class="feature-list">
+                        <h3>✨ 추가된 특징</h3>
+                        <div id="feature-items" class="feature-items"></div>
+                    </div>
+                </div>
+
+                <!-- Voting Tab -->
+                <div id="voting" class="tab-content">
+                    <h2>특징에 투표하기</h2>
+                    <p class="subtitle">카테고리와 MBTI를 선택해서 특징에 투표하세요!</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="filterVotingCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="filterVotingCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="filterVotingCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 필터</label>
+                    <div class="mbti-filter">
+                        <button class="filter-btn active" onclick="filterVotingMBTI('all')">모두보기</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENFP')">ENFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INTJ')">INTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INFJ')">INFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISFP')">ISFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENFJ')">ENFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INTP')">INTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('INFP')">INFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISTJ')">ISTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESFP')">ESFP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ENTJ')">ENTJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESFJ')">ESFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISTP')">ISTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESTP')">ESTP</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ISFJ')">ISFJ</button>
+                        <button class="filter-btn" onclick="filterVotingMBTI('ESTJ')">ESTJ</button>
+                    </div>
+
+                    <div id="voting-list" class="feature-list active">
+                        <div id="voting-items" class="feature-items"></div>
+                        <div id="empty-voting" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            <p style="font-size: 14px;">아직 추가된 특징이 없습니다</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ranking Tab -->
+                <div id="ranking" class="tab-content">
+                    <h2>📊 채택된 특징 랭킹</h2>
+                    <p class="subtitle">커뮤니티의 투표로 선정된 특징들을 순위별로 확인하세요</p>
+
+                    <label>관계 카테고리 선택</label>
+                    <div class="category-filter">
+                        <button class="category-btn active" onclick="filterRankingCategory('lover')">💕 연인</button>
+                        <button class="category-btn" onclick="filterRankingCategory('friend')">👥 친구</button>
+                        <button class="category-btn" onclick="filterRankingCategory('work')">💼 업무</button>
+                    </div>
+
+                    <label>MBTI 필터</label>
+                    <div class="mbti-filter">
+                        <button class="filter-btn active" onclick="filterRankingMBTI('all')">모두보기</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENFP')">ENFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INTJ')">INTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INFJ')">INFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISFP')">ISFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENFJ')">ENFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INTP')">INTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('INFP')">INFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISTJ')">ISTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESFP')">ESFP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ENTJ')">ENTJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESFJ')">ESFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISTP')">ISTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESTP')">ESTP</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ISFJ')">ISFJ</button>
+                        <button class="filter-btn" onclick="filterRankingMBTI('ESTJ')">ESTJ</button>
+                    </div>
+
+                    <div id="ranking-list" class="feature-list active">
+                        <div id="ranking-items" class="feature-items"></div>
+                        <div id="empty-ranking" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            <p style="font-size: 14px;">아직 투표된 특징이 없습니다</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>© 2024 MBTI 커뮤니티</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase 설정
+        const SUPABASE_URL = 'https://fkechinmnetnjbfancm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrZWNoaW5ubW5ldG5qYmZhbmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTM4NDksImV4cCI6MjA5ODEyOTg0OX0.f21Ho-PHFvL-lKqdfQGiM110cggmk79rJ3X2oe9Oqbo';
+
+        let supabaseClient;
+        
+        // Supabase 클라이언트 초기화
+        function initSupabase() {
+            if (!supabaseClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+            return supabaseClient;
+        }
+
+        const MBTI_DESCRIPTIONS = {
+            ENFP: '새로운 가능성과 사람들과의 연결을 좋아합니다',
+            INTJ: '전략적이고 독립적인 사고를 즐깁니다',
+            INFJ: '깊이 있는 감정과 직관을 중시합니다',
+            ISFP: '예술적이고 개인적인 가치를 추구합니다',
+            ENFJ: '사람들을 이끌고 발전시키길 좋아합니다',
+            INTP: '논리와 분석을 통해 세상을 이해합니다',
+            INFP: '이상주의적이고 감정이 풍부합니다',
+            ISTJ: '책임감 있고 계획적입니다',
+            ESFP: '현재를 즐기고 활기찬 분위기를 좋아합니다',
+            ENTJ: '효율적이고 리더십이 강합니다',
+            ESFJ: '사회적이고 타인을 배려합니다',
+            ISTP: '실용적이고 분석적입니다',
+            ESTP: '모험을 즐기고 행동 지향적입니다',
+            ISFJ: '따뜻하고 책임감 있습니다',
+            ESTJ: '조직적이고 전통을 중시합니다'
+        };
+
+        const CATEGORY_LABELS = {
+            lover: '💕 연인',
+            friend: '👥 친구',
+            work: '💼 업무'
+        };
+
+        let features = JSON.parse(localStorage.getItem('mbti-features')) || {};
+        let selectedMBTI = null;
+        let selectedCategory = 'lover';
+        let currentMBTI = 'ENFP';
+        let votingCategory = 'lover';
+        let votingMBTI = 'all';
+        let rankingCategory = 'lover';
+        let rankingMBTI = 'all';
+        let currentUser = null;
+
+        // Google 로그인
+        async function signInWithGoogle() {
+            const btn = document.getElementById('googleLoginBtn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            try {
+                const client = initSupabase();
+                const { data, error } = await client.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin
+                    }
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                alert('로그인에 실패했습니다. 다시 시도해주세요.');
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        // 로그아웃
+        async function logout() {
+            if (confirm('로그아웃하시겠습니까?')) {
+                const client = initSupabase();
+                const { error } = await client.auth.signOut();
+                if (!error) {
+                    location.reload();
+                }
+            }
+        }
+
+        // 사용자 확인
+        async function checkAuth() {
+            const client = initSupabase();
+            const { data: { session } } = await client.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                
+                const userName = session.user.user_metadata?.full_name || session.user.email;
+                document.getElementById('userNameDisplay').textContent = userName;
+                
+                updateMBTI();
+                renderFeatures();
+                renderVoting();
+                renderRanking();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('appScreen').classList.add('hidden');
+            }
+        }
+
+        // 탭 전환
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            if (tabName === 'voting') renderVoting();
+            if (tabName === 'ranking') renderRanking();
+        }
+
+        // MBTI 업데이트
+        function updateMBTI() {
+            const ei = parseInt(document.getElementById('ei-slider').value);
+            const sn = parseInt(document.getElementById('sn-slider').value);
+            const tf = parseInt(document.getElementById('tf-slider').value);
+            const jp = parseInt(document.getElementById('jp-slider').value);
+
+            document.getElementById('ei-value').textContent = ei < 0 ? 'I' : 'E';
+            document.getElementById('sn-value').textContent = sn < 0 ? 'N' : 'S';
+            document.getElementById('tf-value').textContent = tf < 0 ? 'F' : 'T';
+            document.getElementById('jp-value').textContent = jp < 0 ? 'P' : 'J';
+
+            currentMBTI = (ei < 0 ? 'I' : 'E') + (sn < 0 ? 'N' : 'S') + (tf < 0 ? 'F' : 'T') + (jp < 0 ? 'P' : 'J');
+            document.getElementById('result-mbti').textContent = currentMBTI;
+            document.getElementById('result-desc').textContent = MBTI_DESCRIPTIONS[currentMBTI] || '당신의 성격 유형입니다';
+            displayTopFeatures(currentMBTI);
+        }
+
+        // 상위 특징 표시
+        function displayTopFeatures(mbti) {
+            const topFeaturesList = document.getElementById('top-features-list');
+            topFeaturesList.innerHTML = '';
+
+            let allFeatures = [];
+            ['lover', 'friend', 'work'].forEach(cat => {
+                if (features[mbti] && features[mbti][cat]) {
+                    features[mbti][cat].forEach(feature => {
+                        const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+                        allFeatures.push({ ...feature, totalVotes, category: cat });
+                    });
+                }
+            });
+
+            if (allFeatures.length === 0) {
+                topFeaturesList.innerHTML = '<p style="font-size: 12px; color: #94a3b8;">아직 등록된 특징이 없습니다</p>';
+                return;
+            }
+
+            allFeatures.sort((a, b) => b.totalVotes - a.totalVotes);
+            allFeatures.slice(0, 5).forEach((feature, index) => {
+                const div = document.createElement('div');
+                div.className = 'feature-badge';
+
+                let rankEmoji = ['🥇', '🥈', '🥉', '4.', '5.'][index] || `${index + 1}.`;
+
+                div.innerHTML = `
+                    <span class="feature-rank">${rankEmoji}</span>
+                    <span class="feature-text">${feature.text}</span>
+                    <span class="feature-votes">${feature.totalVotes}표</span>
+                `;
+                topFeaturesList.appendChild(div);
+            });
+        }
+
+        function ensureDataStructure() {
+            Object.keys(features).forEach(mbti => {
+                if (typeof features[mbti] === 'object' && !Array.isArray(features[mbti])) {
+                    return;
+                }
+                const oldData = features[mbti];
+                features[mbti] = {
+                    lover: Array.isArray(oldData) ? oldData : [],
+                    friend: [],
+                    work: []
+                };
+            });
+        }
+
+        function selectCategory(category) {
+            selectedCategory = category;
+            document.querySelectorAll('#feature .category-btn').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                const isSelected = (category === 'lover' && btnText.includes('연인')) ||
+                                 (category === 'friend' && btnText.includes('친구')) ||
+                                 (category === 'work' && btnText.includes('업무'));
+                btn.classList.toggle('active', isSelected);
+            });
+            document.getElementById('selected-info').style.display = selectedMBTI ? 'block' : 'none';
+        }
+
+        function selectMBTI(mbti) {
+            selectedMBTI = mbti;
+            document.querySelectorAll('#feature .mbti-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.textContent === mbti);
+            });
+            document.getElementById('selected-info').style.display = 'block';
+            document.getElementById('selected-category-text').textContent = CATEGORY_LABELS[selectedCategory];
+            document.getElementById('selected-mbti-text').textContent = mbti;
+            document.getElementById('feature-input').focus();
+        }
+
+        function saveResult() {
+            alert(`✓ ${currentMBTI} 검사 결과가 저장되었습니다!`);
+            localStorage.setItem('mbti-result', currentMBTI);
+        }
+
+        function addFeature() {
+            if (!selectedMBTI) { alert('MBTI 유형을 먼저 선택해주세요'); return; }
+            const featureText = document.getElementById('feature-input').value.trim();
+            if (!featureText) { alert('특징을 입력해주세요'); return; }
+
+            if (!features[selectedMBTI]) {
+                features[selectedMBTI] = { lover: [], friend: [], work: [] };
+            }
+
+            features[selectedMBTI][selectedCategory].push({
+                id: Date.now(),
+                text: featureText,
+                upvote: 0,
+                downvote: 0,
+                neutral: 0,
+                userVote: null
+            });
+
+            document.getElementById('feature-input').value = '';
+            localStorage.setItem('mbti-features', JSON.stringify(features));
+            renderFeatures();
+            renderVoting();
+            renderRanking();
+            displayTopFeatures(currentMBTI);
+            alert(`✓ ${selectedMBTI} - ${CATEGORY_LABELS[selectedCategory]} 특징이 추가되었습니다!`);
+        }
+
+        function renderFeatures() {
+            const featureItems = document.getElementById('feature-items');
+            featureItems.innerHTML = '';
+            let totalFeatures = 0;
+
+            Object.keys(features).forEach(mbti => {
+                ['lover', 'friend', 'work'].forEach(category => {
+                    if (features[mbti][category]) {
+                        features[mbti][category].forEach((feature, index) => {
+                            totalFeatures++;
+                            const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+                            const div = document.createElement('div');
+                            div.className = 'feature-item';
+                            div.innerHTML = `
+                                <div class="feature-header">
+                                    <div class="feature-info">
+                                        <p class="feature-meta">${CATEGORY_LABELS[category]} • ${mbti}</p>
+                                        <p class="feature-text">${feature.text}</p>
+                                        <div class="feature-stats">
+                                            <span class="stat">👍 <span class="stat-number">${feature.upvote}</span></span>
+                                            <span class="stat">👎 <span class="stat-number">${feature.downvote}</span></span>
+                                            <span class="stat">❓ <span class="stat-number">${feature.neutral}</span></span>
+                                        </div>
+                                    </div>
+                                    <button class="feature-delete" onclick="deleteFeature('${mbti}', '${category}', ${index})">×</button>
+                                </div>
+                            `;
+                            featureItems.appendChild(div);
+                        });
+                    }
+                });
+            });
+
+            document.getElementById('feature-list').classList.toggle('active', totalFeatures > 0);
+        }
+
+        function filterVotingCategory(category) {
+            votingCategory = category;
+            document.querySelectorAll('#voting .category-btn').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                const isSelected = (category === 'lover' && btnText.includes('연인')) ||
+                                 (category === 'friend' && btnText.includes('친구')) ||
+                                 (category === 'work' && btnText.includes('업무'));
+                btn.classList.toggle('active', isSelected);
+            });
+            renderVoting();
+        }
+
+        function filterVotingMBTI(mbti) {
+            votingMBTI = mbti;
+            document.querySelectorAll('#voting .filter-btn').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                const isSelected = (mbti === 'all' && btnText === '모두보기') || btnText === mbti;
+                btn.classList.toggle('active', isSelected);
+            });
+            renderVoting();
+        }
+
+        function renderVoting() {
+            const votingItems = document.getElementById('voting-items');
+            const emptyVoting = document.getElementById('empty-voting');
+            votingItems.innerHTML = '';
+
+            let allFeatures = [];
+            Object.keys(features).forEach(mbti => {
+                if (features[mbti][votingCategory]) {
+                    features[mbti][votingCategory].forEach((feature, index) => {
+                        const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+                        allFeatures.push({ mbti, feature, index, totalVotes, category: votingCategory });
+                    });
+                }
+            });
+
+            if (votingMBTI !== 'all') {
+                allFeatures = allFeatures.filter(item => item.mbti === votingMBTI);
+            }
+
+            allFeatures.sort((a, b) => b.totalVotes - a.totalVotes);
+
+            if (allFeatures.length === 0) {
+                emptyVoting.style.display = 'block';
+                return;
+            }
+
+            emptyVoting.style.display = 'none';
+
+            allFeatures.forEach((item, rank) => {
+                const { mbti, feature, index, category } = item;
+                const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+
+                let rankingBadge = '';
+                if (rank === 0) rankingBadge = '<span class="ranking-badge top1">🥇</span>';
+                else if (rank === 1) rankingBadge = '<span class="ranking-badge top2">🥈</span>';
+                else if (rank === 2) rankingBadge = '<span class="ranking-badge top3">🥉</span>';
+
+                const div = document.createElement('div');
+                div.className = 'feature-item';
+                div.innerHTML = `
+                    <div class="feature-header">
+                        <div class="feature-info">
+                            <p class="feature-mbti">${rankingBadge} ${mbti}</p>
+                            <p class="feature-text">${feature.text}</p>
+                            <div class="feature-stats">
+                                <span class="stat">👍 <span class="stat-number">${feature.upvote}</span></span>
+                                <span class="stat">👎 <span class="stat-number">${feature.downvote}</span></span>
+                                <span class="stat">❓ <span class="stat-number">${feature.neutral}</span></span>
+                                <span class="stat">총: <span class="stat-number">${totalVotes}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vote-buttons">
+                        <button class="vote-btn upvote ${feature.userVote === 'upvote' ? 'voted' : ''}" onclick="vote('${mbti}', '${category}', ${index}, 'upvote')">👍 동의</button>
+                        <button class="vote-btn downvote ${feature.userVote === 'downvote' ? 'voted' : ''}" onclick="vote('${mbti}', '${category}', ${index}, 'downvote')">👎 비동의</button>
+                        <button class="vote-btn neutral ${feature.userVote === 'neutral' ? 'voted' : ''}" onclick="vote('${mbti}', '${category}', ${index}, 'neutral')">❓ 잘모름</button>
+                    </div>
+                `;
+                votingItems.appendChild(div);
+            });
+        }
+
+        function filterRankingCategory(category) {
+            rankingCategory = category;
+            document.querySelectorAll('#ranking .category-btn').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                const isSelected = (category === 'lover' && btnText.includes('연인')) ||
+                                 (category === 'friend' && btnText.includes('친구')) ||
+                                 (category === 'work' && btnText.includes('업무'));
+                btn.classList.toggle('active', isSelected);
+            });
+            renderRanking();
+        }
+
+        function filterRankingMBTI(mbti) {
+            rankingMBTI = mbti;
+            document.querySelectorAll('#ranking .filter-btn').forEach(btn => {
+                const btnText = btn.textContent.trim();
+                const isSelected = (mbti === 'all' && btnText === '모두보기') || btnText === mbti;
+                btn.classList.toggle('active', isSelected);
+            });
+            renderRanking();
+        }
+
+        function renderRanking() {
+            const rankingItems = document.getElementById('ranking-items');
+            const emptyRanking = document.getElementById('empty-ranking');
+            rankingItems.innerHTML = '';
+
+            let allFeatures = [];
+            Object.keys(features).forEach(mbti => {
+                if (features[mbti][rankingCategory]) {
+                    features[mbti][rankingCategory].forEach((feature, index) => {
+                        const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+                        if (totalVotes > 0) {
+                            allFeatures.push({ mbti, feature, index, totalVotes, category: rankingCategory });
+                        }
+                    });
+                }
+            });
+
+            if (rankingMBTI !== 'all') {
+                allFeatures = allFeatures.filter(item => item.mbti === rankingMBTI);
+            }
+
+            allFeatures.sort((a, b) => b.totalVotes - a.totalVotes);
+
+            if (allFeatures.length === 0) {
+                emptyRanking.style.display = 'block';
+                return;
+            }
+
+            emptyRanking.style.display = 'none';
+
+            allFeatures.forEach((item, rank) => {
+                const { mbti, feature } = item;
+                const totalVotes = feature.upvote + feature.downvote + feature.neutral;
+
+                let rankingBadge = '';
+                if (rank === 0) rankingBadge = '<span class="ranking-badge top1">🥇 1위</span>';
+                else if (rank === 1) rankingBadge = '<span class="ranking-badge top2">🥈 2위</span>';
+                else if (rank === 2) rankingBadge = '<span class="ranking-badge top3">🥉 3위</span>';
+                else rankingBadge = `<span style="font-weight: 500; color: #6366f1;">${rank + 1}위</span>`;
+
+                const div = document.createElement('div');
+                div.className = 'feature-item';
+                div.innerHTML = `
+                    <div class="feature-header">
+                        <div class="feature-info">
+                            <p class="feature-meta">${rankingBadge} • ${mbti}</p>
+                            <p class="feature-text">${feature.text}</p>
+                            <div class="feature-stats">
+                                <span class="stat">👍 <span class="stat-number">${feature.upvote}</span></span>
+                                <span class="stat">👎 <span class="stat-number">${feature.downvote}</span></span>
+                                <span class="stat">❓ <span class="stat-number">${feature.neutral}</span></span>
+                                <span class="stat">총투표: <span class="stat-number">${totalVotes}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                rankingItems.appendChild(div);
+            });
+        }
+
+        function vote(mbti, category, index, voteType) {
+            const feature = features[mbti][category][index];
+
+            if (feature.userVote === 'upvote') feature.upvote--;
+            else if (feature.userVote === 'downvote') feature.downvote--;
+            else if (feature.userVote === 'neutral') feature.neutral--;
+
+            if (feature.userVote === voteType) {
+                feature.userVote = null;
+            } else {
+                if (voteType === 'upvote') feature.upvote++;
+                else if (voteType === 'downvote') feature.downvote++;
+                else if (voteType === 'neutral') feature.neutral++;
+                feature.userVote = voteType;
+            }
+
+            localStorage.setItem('mbti-features', JSON.stringify(features));
+            renderVoting();
+            renderRanking();
+            renderFeatures();
+            displayTopFeatures(currentMBTI);
+        }
+
+        function deleteFeature(mbti, category, index) {
+            if (confirm('이 특징을 삭제하시겠습니까?')) {
+                features[mbti][category].splice(index, 1);
+                localStorage.setItem('mbti-features', JSON.stringify(features));
+                renderFeatures();
+                renderVoting();
+                renderRanking();
+                displayTopFeatures(currentMBTI);
+            }
+        }
+
+        // 초기화
+        window.addEventListener('load', () => {
+            ensureDataStructure();
+            checkAuth();
+
+            // 로그인 상태 변화 감지
+            const client = initSupabase();
+            client.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    checkAuth();
+                } else if (event === 'SIGNED_OUT') {
+                    checkAuth();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
